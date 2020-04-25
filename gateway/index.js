@@ -1,6 +1,5 @@
 // index.js
 const { ApolloServer, makeExecutableSchema, gql } = require('apollo-server')
-const update_teal_cache = require('./lookup.js')
 
 const fs = require('fs')
 

@@ -1,6 +1,6 @@
 const fetch = require('node-fetch')
 const redis = require('ioredis')
-const data = new redis()
+const data = new redis(6379, 'redis')
 
 const Query = {
 	//TODO: shorten when logging is no longer needed

@@ -3,7 +3,7 @@ const redis = require('ioredis')
 const data = new redis()
 
 data.on('error', console.error)
-//data.flushall()
+data.flushall()
 
 let lookups = 0
 
@@ -83,22 +83,22 @@ const update_tealcache = async function(){
 		console.time(shortname)
 		const program = await get_program(shortname)
 		
-		for(episode of program.episodes){
-			console.log(episode.id)
-			const request = await fetch(`https://api.teal.cool/episodes/${episode.id}`)
-			const result = await request.json()
-			
-
-			if(result.tracks != null && result.tracks != []){
-				result.tracks.forEach(function(track){
-					data.sadd(`episode:${episode.id}:tracks`, track.id)
-					const scalars = Object.entries(track)
-						.filter(([key, value]) => value != null)
-						.flat()
-					data.hmset(`track:${track.id}:scalars`, scalars)
-				})
-			}
-		}
+//		for(episode of program.episodes){
+//			console.log(episode.id)
+//			const request = await fetch(`https://api.teal.cool/episodes/${episode.id}`)
+//			const result = await request.json()
+//			
+//
+//			if(result.tracks != null && result.tracks != []){
+//				result.tracks.forEach(function(track){
+//					data.sadd(`episode:${episode.id}:tracks`, track.id)
+//					const scalars = Object.entries(track)
+//						.filter(([key, value]) => value != null)
+//						.flat()
+//					data.hmset(`track:${track.id}:scalars`, scalars)
+//				})
+//			}
+//	
 
 
 		console.timeEnd(`${program.shortname}`)
