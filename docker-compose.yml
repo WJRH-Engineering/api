@@ -3,10 +3,6 @@ version: '3'
 services:
   redis:
     image: redis
-    #command: ["redis-server", "--bind", "redis", "port", "6379"]
-    #container_name: redis
-    #expose:
-    #  - 6379
     ports:
       - 6379:6379
 
@@ -15,6 +11,13 @@ services:
     volumes:
       - ./gateway:/app
     ports:
-      - 4000:4000
+      - 80:4000
     depends_on:
       - redis
+
+  teal_cache_controller:
+    build: ./teal_cache_controller
+    volumes:
+      - ./teal_cache_controller:/app
+    depends_on:
+      - gateway

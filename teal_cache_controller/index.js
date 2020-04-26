@@ -1,11 +1,8 @@
 const fetch = require('node-fetch')
 const redis = require('ioredis')
-const data = new redis()
+const data = new redis(6379, 'redis')
 
 data.on('error', console.error)
-data.flushall()
-
-let lookups = 0
 
 const teal_request = async function(url){
 	const request = fetch(url)
@@ -100,7 +97,6 @@ const update_tealcache = async function(){
 //			}
 //	
 
-
 		console.timeEnd(`${program.shortname}`)
 	}
 
@@ -109,12 +105,17 @@ const update_tealcache = async function(){
 }
 
 const update = async function(){
-	console.log('update')
+	data.flushall()
 	const programs = await data.smembers('programs')
 	console.log(programs)
 	if(programs.length == 0){
 		update_tealcache()
 	}
+
+	setTimeout(update, 60 * 60 * 1000)
 }
+
 update()
-module.exports = update
+
+// run update every hour
+setTimeout(update, 60 * 60 * 1000)
