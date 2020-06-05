@@ -7,7 +7,7 @@ data.on('error', console.error)
 const teal_request = async function(url){
 	const request = fetch(url)
 		.then(res => res.json())
-		.catch(err => console.log(err))
+		.catch(err => {})
 		
 	const result = await request
 	return result
@@ -67,17 +67,17 @@ const get_program = async function(shortname){
 }
 
 const update_tealcache = async function(){
-	console.log('Updating Teal Cache')
-	console.time('update_cache')
-	console.log('pulling data from teal...')
+//	console.log('Updating Teal Cache')
+//	console.time('update_cache')
+//	console.log('pulling data from teal...')
 
 	const programs = await get_organization()
 
-	programs.forEach(program => console.log(program.shortname))
+	//programs.forEach(program => console.log(program.shortname))
 	
 	for (const shortname of programs.map(program => program.shortname)){
-		console.log(shortname)
-		console.time(shortname)
+	//	console.log(shortname)
+//		console.time(shortname)
 		const program = await get_program(shortname)
 		
 //		for(episode of program.episodes){
@@ -97,11 +97,11 @@ const update_tealcache = async function(){
 //			}
 //	
 
-		console.timeEnd(`${program.shortname}`)
+//		console.timeEnd(`${program.shortname}`)
 	}
 
-	console.timeEnd('update_cache')
-	console.log('finished')
+	//console.timeEnd('update_cache')
+	//console.log('finished')
 }
 
 const update = async function(){

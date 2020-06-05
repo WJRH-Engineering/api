@@ -1,6 +1,15 @@
 version: '3'
 
 services:
+  database:
+    image: postgres
+    restart: always
+    ports: 
+      - 5432:5432
+    environment:
+      POSTGRES_USER: wjrh
+      POSTGRES_PASSWORD: hogghall
+ 
   redis:
     image: redis
     ports:
@@ -21,3 +30,15 @@ services:
       - ./teal_cache_controller:/app
     depends_on:
       - gateway
+
+  grafana:
+    image: grafana/grafana
+    restart: always
+    ports:
+      - 3000:3000
+
+  loki:
+    image: grafana/loki
+    restart: always
+    ports:
+      - 3100:3100
