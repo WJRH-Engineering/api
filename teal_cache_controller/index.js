@@ -1,3 +1,5 @@
+#!/usr/bin/node
+
 const fetch = require('node-fetch')
 const redis = require('ioredis')
 const data = new redis(6379, 'redis')
