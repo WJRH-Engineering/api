@@ -5,6 +5,7 @@ module.exports = gql`
 type Query {
 	programs: [Program]
 	program(shortname: String): Program
+	schedule: [Timeslot]
 }
 
 type Program {
@@ -54,10 +55,10 @@ type Track {
 	mbid: String,
 	title: String,
 	id: String
-	song: Song
+	lastfm_data: LastFM_Data
 }
 
-type Song {
+type LastFM_Data {
 	name: String
 	mbid: String
 	duration: Int
@@ -67,4 +68,9 @@ type Song {
 	wiki: String
 }
 
-`
+type Timeslot {
+	program_name: String
+	time_range: String
+	program: Program
+	day_of_week: String
+}`
