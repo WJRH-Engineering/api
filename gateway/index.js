@@ -12,6 +12,9 @@ const base_types = `
 type Query {
 	_blank: String
 }
+type Mutation {
+	_blank: String
+}
 type Timeslot {
 	_blank: String
 }`
