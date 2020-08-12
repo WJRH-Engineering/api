@@ -1,10 +1,35 @@
+const fetch = require('node-fetch')
 const {oneLineTrim} = require('common-tags')
 const LASTFM_API_KEY = "14cacc2d28210dcd318ffa2085778844"
 
-// const Query = {lastfm_data: function(parent)}
+
+schema = `
+type LastFM_Data {
+	name: String
+	mbid: String
+	duration: Int
+	artist: String
+	album: String
+	artwork: String
+	wiki: String
+}
+
+extend type Query {
+	lastfm(artist:String, title:String): LastFM_Data
+}
+
+extend type Track {
+	lastfm_data: LastFM_Data
+}`
+
+
 const Track = {
 	lastfm_data: fetch_lastfm_data
 } 
+
+const Query = {
+	lastfm: async (parent, args) => fetch_lastfm_data(args)
+}
 
 async function fetch_lastfm_data({artist, title}){
 	artist = artist || ''
@@ -45,4 +70,4 @@ async function fetch_lastfm_data({artist, title}){
 	return output
 }
 
-module.exports = {Track}
+module.exports = {schema, resolvers:{Query, Track}}
