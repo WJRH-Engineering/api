@@ -1,3 +1,6 @@
+# postgres password file
+gateway/.pgpass
+
 # Logs
 logs
 *.log
