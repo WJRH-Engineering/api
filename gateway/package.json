@@ -13,6 +13,7 @@
     "common-tags": "^1.8.0",
     "graphql": "^15.0.0",
     "ioredis": "^4.16.3",
+    "koa-graphql-parser": "^0.2.1",
     "pg": "^8.3.0"
   }
 }
