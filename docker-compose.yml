@@ -1,6 +1,7 @@
-version: '3'
+version: '3.4'
 
 services:
+# postgres sql database
   database:
     image: postgres
     restart: always
@@ -12,11 +13,13 @@ services:
       POSTGRES_USER: wjrh
       POSTGRES_PASSWORD: hogghall
  
+# redis
   redis:
     image: redis
     ports:
       - 6379:6379
 
+# graphql api gateway
   gateway:
     build: ./gateway
     volumes:
@@ -33,15 +36,42 @@ services:
     depends_on:
       - gateway
 
+# grafana server
   grafana:
     build: ./custom-grafana
     restart: always
     volumes:
       - "grafana-lib:/var/lib/grafana"
+      - "/var/lib/grafana/plugins"
       - "grafana-etc:/var/etc/grafana"
     ports:
       - 3000:3000
+    environment:
+      TZ: 'EST5EDT'
 
+  # vpn:
+  #   image: dperson/openvpn-client
+  #   networks:
+  #     - default
+  #   environment:
+  #     TZ: 'EST5EDT'
+  #   cap_add:
+  #     - net_admin
+  #   command: openvpn --config /vpn/client.conf
+  #   read_only: true
+  #   tmpfs:
+  #     - /run
+  #     - /tmp
+  #   restart: unless-stopped
+  #   security_opt:
+  #     - label:disable
+  #   stdin_open: true
+  #   tty: true
+  #   volumes:
+  #     - /dev/net:/dev/net:z
+  #     - ./vpn:/vpn
+  #   ports:
+  #     - 3000:3000
 
 volumes:
   grafana-lib:
