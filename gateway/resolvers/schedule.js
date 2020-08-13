@@ -1,10 +1,11 @@
 const { Client } = require('pg')
 
 const database_params = {
-	host: "api.wjrh.org",
+	host: "database",
 	port: 5432,
 	user: "wjrh",
 	database: "testdb",
+	password: "hogghall"
 	// database and password are defined in the .pgpass file
 }
 
