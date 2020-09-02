@@ -36,6 +36,8 @@ extend type Timeslot{
 	time_range: String
 	day_of_week: String
 	day_number: Int
+	start_hour: Int
+	end_hour: Int
 
 	# this edge defined in resolvers/teal.js
 	# program: Program
@@ -116,7 +118,10 @@ async function get_schedule(){
 			id,
 			shortname as shortname,
 			time_range,
-			EXTRACT(isodow FROM lower(time_range)) as day_number
+			EXTRACT(isodow FROM lower(time_range)) as day_number,
+			EXTRACT(hour FROM lower(time_range)) as start_hour,
+			EXTRACT(hour FROM upper(time_range)) as end_hour
+
 		FROM schedule;
 	`)	
 	await client.end()

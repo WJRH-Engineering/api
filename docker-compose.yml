@@ -19,7 +19,7 @@ services:
     ports:
       - 6379:6379
 
-# graphql api gateway
+  # graphql api gateway
   gateway:
     build: ./gateway
     volumes:
@@ -29,14 +29,7 @@ services:
     depends_on:
       - redis
 
-  teal_cache_controller:
-    build: ./teal_cache_controller
-    volumes:
-      - ./teal_cache_controller:/app
-    depends_on:
-      - gateway
-
-# grafana server
+  # grafana server
   grafana:
     build: ./custom-grafana
     restart: always
@@ -49,29 +42,22 @@ services:
     environment:
       TZ: 'EST5EDT'
 
-  # vpn:
-  #   image: dperson/openvpn-client
-  #   networks:
-  #     - default
-  #   environment:
-  #     TZ: 'EST5EDT'
-  #   cap_add:
-  #     - net_admin
-  #   command: openvpn --config /vpn/client.conf
-  #   read_only: true
-  #   tmpfs:
-  #     - /run
-  #     - /tmp
-  #   restart: unless-stopped
-  #   security_opt:
-  #     - label:disable
-  #   stdin_open: true
-  #   tty: true
-  #   volumes:
-  #     - /dev/net:/dev/net:z
-  #     - ./vpn:/vpn
-  #   ports:
-  #     - 3000:3000
+  scheduler:
+    image: mcuadros/ofelia
+    command: daemon --docker
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    depends_on:
+      - clone-teal
+    labels:
+      ofelia.job-run.clone-teal.schedule: "@hourly"
+      ofelia.job-run.clone-teal.image: "api_clone-teal"
+      ofelia.job-run.clone-teal.command: "node index.js"
+
+  clone-teal:
+    build: ./clone-teal
+    depends_on:
+      - gateway
 
 volumes:
   grafana-lib:

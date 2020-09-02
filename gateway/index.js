@@ -34,6 +34,7 @@ const resolvers = graphql_data
 	.map(data => data.resolvers || [])
 
 const server = new ApolloServer({ 
+	cors: true,
 	typeDefs: gql(schema),
 	resolvers: resolvers,
 })

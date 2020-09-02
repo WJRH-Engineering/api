@@ -69,26 +69,25 @@ const Query = {
 	programs: async function(){
 		const shortnames = await data.smembers('programs')
 		const output = shortnames.map(async function(shortname){
-			const scalars = await data.hgetall(`program:${shortname}:scalars`)
-			return scalars
+			return await data.hgetall(`programs:${shortname}:scalars`)
 		})
 		return output
 	},
 	program: async function(parent, {shortname}){
-		return await data.hgetall(`program:${shortname}:scalars`)
+		return await data.hgetall(`programs:${shortname}:scalars`)
 	}
 }
 
 const Timeslot = {
 	program: async function({shortname}){
-		return data.hgetall(`program:${shortname}:scalars`)		
+		return data.hgetall(`programs:${shortname}:scalars`)		
 	}
 }
 
 const Program = {
 	episodes: async function(parent, args){
-		const episode_ids = await data.smembers(`program:${parent.shortname}:episodes`)	
-		let output = episode_ids.map(id => data.hgetall(`episode:${id}:scalars`))
+		const episode_ids = await data.zrevrange(`programs:${parent.shortname}:episodes`, 0, -1)	
+		let output = episode_ids.map(id => data.hgetall(`episodes:${id}:scalars`))
 		
 		if(args.limit){
 			output = output.slice(0, args.limit)
