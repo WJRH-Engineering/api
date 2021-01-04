@@ -9,7 +9,12 @@ edition = "2018"
 [dependencies]
 juniper = "0.15.1"
 rocket = "0.4.5"
+juniper_rocket = "0.6"
 chrono = "0.4"
 regex = "^0"
 lazy_static = "^0"
 diesel = { version = "1.4.5", features = ["postgres", "chrono"] }
+
+sqlx = { version = "0.4.1", features = ["chrono", "postgres", "runtime-async-std-native-tls" ] }
+async-std = { version = "1.6", features = [ "attributes" ] }
+reqwest = "0.10"
