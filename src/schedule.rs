@@ -2,8 +2,23 @@ use juniper::{graphql_object, GraphQLObject};
 use sqlx::postgres::PgPoolOptions;
 use serde::Deserialize;
 use serde_json;
+use redis;
 
-// use std::str::FromStr;
+use std::collections::HashMap;
+
+use crate::teal::*;
+
+
+#[graphql_object]
+impl TealProgram {
+	pub fn name(&self) -> &str { safe_get(&self.scalars, "name") }
+	pub fn shortname(&self) -> &str { safe_get(&self.scalars, "shortname") }
+	pub fn description(&self) -> &str { safe_get(&self.scalars, "description") }
+	pub fn cover_image(&self) -> &str { safe_get(&self.scalars, "cover_image") }
+	pub fn id(&self) -> &str { safe_get(&self.scalars, "id") }
+	pub fn author(&self) -> &str { safe_get(&self.scalars, "author") }
+	pub fn stream(&self) -> &str { safe_get(&self.scalars, "stream") }
+}
 
 #[derive(sqlx::FromRow)]
 #[derive(GraphQLObject)]
@@ -124,6 +139,10 @@ impl Query {
 
 	async fn lookup_song(title: String, artist: String) -> Song {
 		Song{title: "test".to_string(), artist: "test".to_string(), details: None}
+	}
+
+	async fn programs() -> Vec<TealProgram> {
+		TealProgram::get_all()
 	}
 
 	async fn mountpoint(shortname: String) -> MountPoint {

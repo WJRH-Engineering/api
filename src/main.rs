@@ -9,6 +9,8 @@ use juniper_actix::graphql_handler;
 use juniper_actix::playground_handler;
 
 pub struct Query;
+
+mod teal;
 mod schedule;
 
 type Schema = juniper::RootNode<'static, Query, EmptyMutation<()>, EmptySubscription<()>>;
@@ -40,16 +42,16 @@ async fn graphql(
 async fn main() -> std::io::Result<()>{
 
 	// just for testing
-	schedule::lookup_song("abcd".to_string(), "defg".to_string()).await;
+	// schedule::test_redis().await;
 
-	Ok(())
+	// Ok(())
 	
 
-	// start the actix web server
-	// HttpServer::new(|| {
-	// 	App::new()
-	// 		.data(schema())
-	// 		.service(playground)
-	// 		.service(graphql)
-	// }).bind("0.0.0.0:8000")?.run().await
+	 // start the actix web server
+	 HttpServer::new(|| {
+		App::new()
+			.data(schema())
+			.service(playground)
+			.service(graphql)
+	 }).bind("0.0.0.0:8000")?.run().await
 }
