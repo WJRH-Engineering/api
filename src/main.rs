@@ -3,36 +3,45 @@
 	GraphQLEnum, Variables, GraphQLObject,
  };
 
- pub struct Query;
- mod schedule;
+use actix_web::{web, App, HttpResponse, get, post, HttpRequest, HttpServer, Responder};
 
-// A root schema consists of a query, a mutation, and a subscription.
-// Request queries can be executed against a RootNode.
-// pub type Schema = juniper::RootNode<'static, Query, EmptyMutation, EmptySubscription>;
+use juniper_actix::graphql_handler;
+use juniper_actix::playground_handler;
+
+pub struct Query;
+mod schedule;
 
 type Schema = juniper::RootNode<'static, Query, EmptyMutation<()>, EmptySubscription<()>>;
 
-async fn run() {
-	let (res, errors) = juniper::execute(
-		"query {schedule{ start }}",
-		None,
-		&Schema::new(Query, EmptyMutation::new(), EmptySubscription::new()),
-		&Variables::new(),
-		&()
-	).await.unwrap();
-
-	println!("----");
-	println!("{}", res);
-	println!("----");
+fn schema() -> Schema {
+    Schema::new(
+        Query,
+        EmptyMutation::new(),
+        EmptySubscription::new(),
+    )
 }
 
-use reqwest::get;
+#[get("/")]
+async fn playground() -> impl Responder {
+	playground_handler("/", None).await
+}
 
-#[async_std::main]
-async fn main() -> Result<(), sqlx::Error> {
+#[post("/")]
+async fn graphql(
+	request: HttpRequest,
+	payload: actix_web::web::Payload,
+	schema: web::Data<Schema>,
+) -> impl Responder {
+	graphql_handler(&schema, &(), request, payload).await
+}
 
-	let result = get("");
-
-	run().await;
-	Ok(())
+#[actix_web::main]
+async fn main() -> std::io::Result<()>{
+	// start the actix web server
+	HttpServer::new(|| {
+		App::new()
+			.data(schema())
+			.service(playground)
+			.service(graphql)
+	}).bind("0.0.0.0:8000")?.run().await
 }
