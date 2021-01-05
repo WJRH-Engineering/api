@@ -1,10 +1,7 @@
- use juniper::{
-	graphql_object, EmptyMutation, EmptySubscription, FieldResult, 
-	GraphQLEnum, Variables, GraphQLObject,
- };
-
-
-use::sqlx::postgres::PgPoolOptions;
+use juniper::{graphql_object, GraphQLObject};
+use sqlx::postgres::PgPoolOptions;
+use serde::Deserialize;
+use serde_json;
 
 // use std::str::FromStr;
 
@@ -62,9 +59,73 @@ impl TimeSlot {
 	}
 }
 
+use reqwest as fetch;
+use url::{Url, ParseError};
+
+struct Song {
+	title: String,
+	artist: String,
+	details: Option<LastFMTrack>,
+}
+
+#[graphql_object]
+impl Song {
+	async fn title(&self) -> String {self.title.clone()}
+}
+
+#[derive(Deserialize)]
+struct LastFMArtist {
+	name: String,
+	mbid: String,
+	url: String,
+}
+
+#[derive(Deserialize)]
+struct LastFMTrack {
+	name: String,
+	mbid: String,
+	url: String,
+	duration: String,
+	artist: LastFMArtist,
+}
+
+#[derive(Deserialize)]
+struct LastFMResponse {
+	track: Option<LastFMTrack>,
+}
+
 use super::Query;
-#[graphql_object()]
+
+pub async fn lookup_song(title: String, artist: String) {
+	let url_base = "ws.audioscrobbler.com/2.0/";	
+	let url = format!("http://{base}?{method}&api_key={lastfmkey}&artist={artist}&track={track}&autocorrect&format=json",
+		base = url_base,
+		lastfmkey = "14cacc2d28210dcd318ffa2085778844",
+		method = "method=track.getInfo",
+		artist = "cake",
+		track = "the+distance",
+	);
+
+	println!("{}", url);
+
+	let response_string = fetch::get(&url).await.unwrap().text().await.unwrap();
+	let response: LastFMResponse = serde_json::from_str(&response_string).unwrap();
+	let track: LastFMTrack = match response.track {
+		Some(track) => track,
+		None => panic!(),
+	};
+
+	println!("{}", track.artist.name);
+	
+}
+
+#[graphql_object]
 impl Query {
+
+	async fn lookup_song(title: String, artist: String) -> Song {
+		Song{title: "test".to_string(), artist: "test".to_string(), details: None}
+	}
+
 	async fn mountpoint(shortname: String) -> MountPoint {
 		let database_url = "postgres://dev:hackme@api.wjrh.org:5432/graphqltest";
 	

@@ -14,11 +14,11 @@ mod schedule;
 type Schema = juniper::RootNode<'static, Query, EmptyMutation<()>, EmptySubscription<()>>;
 
 fn schema() -> Schema {
-    Schema::new(
-        Query,
-        EmptyMutation::new(),
-        EmptySubscription::new(),
-    )
+	Schema::new(
+		Query,
+		EmptyMutation::new(),
+		EmptySubscription::new(),
+	)
 }
 
 #[get("/")]
@@ -35,13 +35,21 @@ async fn graphql(
 	graphql_handler(&schema, &(), request, payload).await
 }
 
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()>{
+
+	// just for testing
+	schedule::lookup_song("abcd".to_string(), "defg".to_string()).await;
+
+	Ok(())
+	
+
 	// start the actix web server
-	HttpServer::new(|| {
-		App::new()
-			.data(schema())
-			.service(playground)
-			.service(graphql)
-	}).bind("0.0.0.0:8000")?.run().await
+	// HttpServer::new(|| {
+	// 	App::new()
+	// 		.data(schema())
+	// 		.service(playground)
+	// 		.service(graphql)
+	// }).bind("0.0.0.0:8000")?.run().await
 }
