@@ -10,7 +10,9 @@ use juniper_actix::playground_handler;
 
 pub struct Query;
 
+mod schema;
 mod teal;
+mod lastfm;
 mod schedule;
 
 type Schema = juniper::RootNode<'static, Query, EmptyMutation<()>, EmptySubscription<()>>;
