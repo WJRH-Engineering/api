@@ -1,5 +1,5 @@
  use juniper::{
-	graphql_object, EmptyMutation, EmptySubscription, FieldResult, 
+	graphql_object, EmptyMutation, FieldResult, 
 	GraphQLEnum, Variables, GraphQLObject,
  };
 
@@ -15,7 +15,7 @@ mod teal;
 mod lastfm;
 mod schedule;
 
-type Schema = juniper::RootNode<'static, Query, EmptyMutation<()>, EmptySubscription<()>>;
+type Schema = juniper::RootNode<'static, Query, EmptyMutation<()>>;
 
 fn schema() -> Schema {
 	Schema::new(
