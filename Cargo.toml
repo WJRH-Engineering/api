@@ -7,19 +7,18 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-juniper = "0.14.2"
-url = "^0"
+
+async-graphql = "2.5.13"
+# rouille = "^0"
+tide = "^0"
+
 serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
 redis = "*"
 
-actix-web = "3"
-juniper_actix = "0.2.0"
-
 chrono = "0.4"
 regex = "^0"
 lazy_static = "^0"
-diesel = { version = "1.4.5", features = ["postgres", "chrono"] }
 
 sqlx = { version = "0.4.1", features = ["chrono", "postgres", "runtime-async-std-native-tls" ] }
 async-std = { version = "1.6", features = [ "attributes" ] }

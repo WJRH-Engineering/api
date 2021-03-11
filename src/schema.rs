@@ -1,4 +1,4 @@
-use juniper::{graphql_object, GraphQLObject};
+// use juniper::{graphql_object, GraphQLObject};
 use sqlx::postgres::PgPoolOptions;
 use serde::Deserialize;
 use serde_json;
@@ -18,18 +18,20 @@ use crate::schedule;
 
 use crate::lastfm;
 
-use super::Query;
+use async_graphql::Object;
+
+pub struct Query;
 
 
-#[graphql_object]
+#[Object]
 impl Query {
 	/// Look up a song on Last FM
-	async fn lookup_song(title: String, artist: String) -> Song {
+	pub async fn lookup_song(&self, title: String, artist: String) -> Song {
 		lastfm::lookup_song(&title, &artist).await
 	}
 
 	/// Get all teal programs associated with WJRH
-	async fn programs(mut limit: Option<i32>) -> Vec<TealProgram> {
+	pub async fn programs(&self, mut limit: Option<i32>) -> Vec<TealProgram> {
 		let mut connection = teal::get_connection().unwrap();
 		let mut programs = TealProgram::get_all(&mut connection);
 
@@ -43,14 +45,14 @@ impl Query {
 	}
 
 	/// Get a specific teal program
-	async fn program(shortname: String) -> Program {
+	async fn program(&self, shortname: String) -> Program {
 		let mut connection = teal::get_connection().unwrap();
 		TealProgram::get_from_redis(&shortname, &mut connection)
 			.expect("Cannot find program shortname")
 	}
 
 	/// Get the current schedule
-	async fn schedule() -> Vec<TimeSlot> {
+	async fn schedule(&self) -> Vec<TimeSlot> {
 		schedule::TimeSlot::get_schedule().await
 	}
 }
@@ -61,20 +63,20 @@ type Program = TealProgram;
 type Episode = TealEpisode;
 type Track = TealTrack;
 
-#[graphql_object]
+#[Object]
 impl Program {
-	pub fn name(&self) -> &str { safe_get(&self.scalars, "name") }
+	pub async fn name(&self) -> &str { safe_get(&self.scalars, "name") }
 
 	/// A shortened, url safe version of the name used to refererence the Program
-	pub fn shortname(&self) -> &str { safe_get(&self.scalars, "shortname") }
-	pub fn description(&self) -> &str { safe_get(&self.scalars, "description") }
-	pub fn cover_image(&self) -> &str { safe_get(&self.scalars, "cover_image") }
-	pub fn id(&self) -> &str { safe_get(&self.scalars, "id") }
-	pub fn author(&self) -> &str { safe_get(&self.scalars, "author") }
-	pub fn stream(&self) -> &str { safe_get(&self.scalars, "stream") }
+	pub async fn shortname(&self) -> &str { safe_get(&self.scalars, "shortname") }
+	pub async fn description(&self) -> &str { safe_get(&self.scalars, "description") }
+	pub async fn cover_image(&self) -> &str { safe_get(&self.scalars, "cover_image") }
+	pub async fn id(&self) -> &str { safe_get(&self.scalars, "id") }
+	pub async fn author(&self) -> &str { safe_get(&self.scalars, "author") }
+	pub async fn stream(&self) -> &str { safe_get(&self.scalars, "stream") }
 
 	/// A list of episodes that this program has recorded
-	pub fn episodes(&self) -> Vec<Episode> {
+	pub async fn episodes(&self) -> Vec<Episode> {
 		let mut connection = teal::get_connection().unwrap();
 		let mut output: Vec<TealEpisode> = vec![];
 		for id in &self.episode_ids {
@@ -86,15 +88,15 @@ impl Program {
 	}
 }
 
-#[graphql_object]
+#[Object]
 impl Episode {
-	pub fn id(&self) -> &str  { safe_get(&self.scalars, "id") }
-	pub fn audio_url(&self) -> &str  { safe_get(&self.scalars, "audio_url") }
-	pub fn delay(&self) -> i32 { safe_get(&self.scalars, "delay").parse().unwrap() }
-	pub fn description(&self) -> &str  { safe_get(&self.scalars, "description") }
-	pub fn start_time(&self) -> DateTime<Utc>  { str::parse(safe_get(&self.scalars, "start_time")).unwrap() }
-	pub fn end_time(&self) -> DateTime<Utc>  { str::parse(safe_get(&self.scalars, "end_time")).unwrap() }
-	pub fn explicit(&self) -> &str  { safe_get(&self.scalars, "explicit") }
+	pub async fn id(&self) -> &str  { safe_get(&self.scalars, "id") }
+	pub async fn audio_url(&self) -> &str  { safe_get(&self.scalars, "audio_url") }
+	pub async fn delay(&self) -> i32 { safe_get(&self.scalars, "delay").parse().unwrap() }
+	pub async fn description(&self) -> &str  { safe_get(&self.scalars, "description") }
+	pub async fn start_time(&self) -> DateTime<Utc>  { str::parse(safe_get(&self.scalars, "start_time")).unwrap() }
+	pub async fn end_time(&self) -> DateTime<Utc>  { str::parse(safe_get(&self.scalars, "end_time")).unwrap() }
+	pub async fn explicit(&self) -> &str  { safe_get(&self.scalars, "explicit") }
 
 	/// A list of tracks logged during this episode
 	pub async fn tracks(&self) -> Vec<TealTrack> { 
@@ -102,7 +104,7 @@ impl Episode {
 	}
 }
 
-#[graphql_object]
+#[Object]
 impl Track {
 
 	/// Metadata about the track pulled from the LastFM database. If the song cannot be found in
@@ -119,28 +121,28 @@ impl Track {
 	/// Equivalent to the title field in the song object, except that it will not trigger a call
 	/// to the LastFM api. Instead, it will always return the value stored in the Teal database.
 	/// Using this field can drastically improve performance for large queries
-	pub fn title(&self) -> Option<String> {self.clone().title}
+	pub async fn title(&self) -> Option<String> {self.clone().title}
 
 	/// Equivalent to the artist field in the song object, except that it will not trigger a call
 	/// to the LastFM api. Instead, it will always return the value stored in the Teal database.
 	/// Using this field can drastically improve performance for large queries
-	pub fn artist(&self) -> Option<String> {self.clone().artist}
+	pub async fn artist(&self) -> Option<String> {self.clone().artist}
 	
 
-	pub fn log_time(&self) -> Option<String> {self.clone().log_time}
+	pub async fn log_time(&self) -> Option<String> {self.clone().log_time}
 
 	/// musicbrainz id, used to identify the song in the music brainz database
 	/// https://musicbrainz.org/
-	pub fn mbid(&self) -> Option<String> {self.clone().mbid}
+	pub async fn mbid(&self) -> Option<String> {self.clone().mbid}
 
 	/// teal specific id
-	pub fn id(&self) -> Option<String> {self.clone().id}
+	pub async fn id(&self) -> Option<String> {self.clone().id}
 }
 
 
-#[graphql_object]
+#[Object]
 impl Song {
-	pub fn title(&self) -> String { 
+	pub async fn title(&self) -> String { 
 
 		// clone self.details so we can do operations on it
 		let details = self.details.clone();
@@ -158,7 +160,7 @@ impl Song {
 		}
 	}
 
-	pub fn artist(&self) -> String { 
+	pub async fn artist(&self) -> String { 
 		let details = self.details.clone();
 		// same logic as title, but one layer deeper
 		let artist = (|details: Option<LastFMTrack>| Some(details?.artist?.name?))(details);
@@ -168,12 +170,12 @@ impl Song {
 		}
 	}
 
-	pub fn url(&self) -> Option<String> {
+	pub async fn url(&self) -> Option<String> {
 		let details = self.details.clone();
 		Some(details?.url?)
 	}
 
-	pub fn wiki(&self) -> Option<String> {
+	pub async fn wiki(&self) -> Option<String> {
 		let details = self.details.clone();
 		Some(details?.wiki?.content?)
 		
@@ -181,20 +183,20 @@ impl Song {
 
 }
 
-#[graphql_object]
+#[Object]
 impl TimeSlot {
 	/// the shortname of the show
-	fn shortname(&self) -> &str { &self.shortname }
+	async fn shortname(&self) -> &str { &self.shortname }
 
 	/// program info for the show
-	fn program(&self) -> Program {
+	async fn program(&self) -> Program {
 		let mut connection = teal::get_connection().unwrap();	
 		TealProgram::get_from_redis(&self.shortname, &mut connection)
 			.expect("Cannot find program")
 	}
 
 	/// the show's start time
-	fn start(&self) -> DateTime<Utc> {
+	async fn start(&self) -> DateTime<Utc> {
 		match self.time_range.start {
 			Included(time) => time,
 			Excluded(time) => time,
@@ -203,7 +205,7 @@ impl TimeSlot {
 	}
 	
 	/// the show's end time
-	fn end(&self) -> DateTime<Utc> {
+	async fn end(&self) -> DateTime<Utc> {
 		match self.time_range.end {
 			Included(time) => time,
 			Excluded(time) => time,
