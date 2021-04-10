@@ -1,165 +1,79 @@
+mod data_sources;
+mod graphql_types;
+mod schema;
+mod server;
 
-use async_graphql::*;
+use dotenv::dotenv;
+use std::env;
+
+use async_graphql::{EmptyMutation, EmptySubscription};
 use async_std;
-
-mod teal;
-mod lastfm;
-mod schedule;
-
 use serde_json::from_str;
 
-mod schema;
-
 use schema::Query;
+type Schema = async_graphql::Schema<Query, EmptyMutation, EmptySubscription>;
 
-//server
-
-use std::fs::File;
-
-
-
-use tide::Request;
-use tide::Response;
-use tide::prelude::*;
-
-// async fn server(request: Request, schema: MySchema) {
-// 	router!{ request,
-// 		(GET) (/) => { playground() },
-// 		(POST) (/) => { graphql(&request, schema).await },
-
-// 		_ => { Response::empty_404() }
-// 	}	
-// }
-
-async fn playground(request: Request<()>) -> tide::Result {
-	match std::fs::read_to_string("graphql-playground.html") {
-		Ok(file) => {
-			let response = Response::builder(200)
-				.body(file.to_string())
-				.header("content-type", "text/html")
-				.build();
-
-			Ok(response)
-		},
-		Err(error) => {
-			println!("error reading index.html:");
-			println!("{:#?}", error);
-			let response = Response::builder(404)
-				.body("oh no a 404 error!")
-				.header("content-type", "text/plain")
-				.build();
-
-			Ok(response)
-		}
-	}
+macro_rules! get_schema {
+    ($query:ident) => {
+        Schema::new(
+           $query::default(),
+           EmptyMutation,
+           EmptySubscription,
+        );
+   }
 }
-
-// "{\"operationName\":null,\"variables\":{},\"query\":\"mutation {\\n  schedule {\\n    shortname\\n  }\\n}\\n\"}"
-
-#[derive(Deserialize)]
-struct RequestBody {
-	operation_name: Option<String>,
-	variables: Option<std::collections::HashMap<String, String>>,
-	query: String,
-}
-
-fn get_query(body_string: &str) -> String {
-	println!("{}", body_string);	
-	let body: RequestBody = from_str(body_string).unwrap();
-	format!("{}", &body.query)
-}
-
-
-type MySchema = Schema<Query, EmptyMutation, EmptySubscription>;
-async fn graphql(mut request: Request<()>) -> tide::Result {
-	let schema = Schema::new(Query, EmptyMutation, EmptySubscription);
-	let body = request.body_string().await?;
-	println!("{:?}", &body);
-	let query = get_query(&body);
-
-	let res = schema.execute(&query).await;
-	// let res = schema.execute("query{ schedule {shortname} }").await;
-	let json = serde_json::to_string(&res).unwrap();
-	Ok(Response::builder(200).body(json).header("content-type", "text/json").build())
-}
-
 
 #[async_std::main]
 async fn main() {
-	
-	// let body_string = "{\"operationName\":null,\"variables\":{},\"query\":\"mutation {\\n  schedule {\\n    shortname\\n  }\\n}\\n\"}";
-	// println!("{}", get_query(&body_string));
-	// let schema = Schema::new(Query, EmptyMutation, EmptySubscription);
-	// let res = schema.execute("query{ schedule {shortname} }").await;
-	// let json = serde_json::to_string(&res).unwrap();
-	// println!("{:#?}", json);
 
-	let mut app = tide::new();
-	app.at("/").get(playground);
-	app.at("/").post(move |request| {
-		graphql(request)
-	});
+    // load extra settings from the .env file
+	println!("Loading environment variables");
+	dotenv().ok();
+
+    // build the schema
+	let schema = Schema::new(
+		Query::default(),
+		EmptyMutation,
+		EmptySubscription
+	);
+
+    // start the server
+    println!("Listening on port 2000");
+	let app = server::init(schema);
 	app.listen("0.0.0.0:2000").await;
 }
 
-// old stuff
 
- // use juniper::{
-	// graphql_object, EmptyMutation, FieldResult, 
-	// GraphQLEnum, Variables, GraphQLObject,
- // };
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-// use actix_web::{web, App, HttpResponse, get, post, HttpRequest, HttpServer, Responder};
-
-// use juniper_actix::graphql_handler;
-// use juniper_actix::playground_handler;
-
-// pub struct Query;
-
-// mod schema;
-// mod teal;
-// mod lastfm;
-// mod schedule;
-
-// type Schema = juniper::RootNode<'static, Query, EmptyMutation<()>>;
-
-// fn schema() -> Schema {
-	// Schema::new(
-		// Query,
-		// EmptyMutation::new(),
-		// EmptySubscription::new(),
-	// )
-// }
-
-// #[get("/")]
-// async fn playground() -> impl Responder {
-	// playground_handler("/", None).await
-// }
-
-// #[post("/")]
-// async fn graphql(
-	// request: HttpRequest,
-	// payload: actix_web::web::Payload,
-	// schema: web::Data<Schema>,
-// ) -> impl Responder {
-	// graphql_handler(&schema, &(), request, payload).await
-// }
-
-
-// #[actix_web::main]
-// async fn main() -> std::io::Result<()>{
-
-	// // just for testing
-	// // schedule::test_redis().await;
-
-	// // Ok(())
-	
-
-	 // // start the actix web server
-	 // HttpServer::new(|| {
-		// App::new()
-			// .data(schema())
-			// .service(playground)
-			// .service(graphql)
-	 // }).bind("0.0.0.0:8000")?.run().await
-// }
+    #[async_std::test]
+    async fn lookup_song(){
+        let schema = get_schema!(Query);
+        let res = schema.execute("{
+            lookupSong(artist: \"hilltop hoods\", title: \"leave me lonely\") {
+                wiki
+            }
+        }").await;
+        let json = serde_json::to_string_pretty(&res).unwrap();
+        println!("{}", json);
+        // panic!();
+   } 
+    
+    #[async_std::test]
+    async fn query(){
+        let schema = get_schema!(Query);
+        let res = schema.execute("{
+            programs(limit: 5) {
+                name
+                episodes {
+                    name
+                }
+            }
+        }").await;
+        let json = serde_json::to_string_pretty(&res).unwrap();
+        println!("{}", json);
+        // panic!();
+   } 
+}
