@@ -4,7 +4,7 @@ use core::ops::Bound::*;
 use crate::graphql_types::teal;
 use async_graphql::*;
 use std::fmt;
-
+use crate::data_sources::redis;
 
 #[derive(Debug)]
 struct Schedule {
@@ -66,18 +66,10 @@ impl fmt::Display for Schedule {
 #[graphql(complex)]
 struct TimeSlot {
 	pub shortname: String,
-
-    #[graphql(skip)]
     pub start: TimeOfWeek,
-
-    #[graphql(skip)]
     pub end: TimeOfWeek,
-
     pub schedule: Schedule,
 }
-
-
-use crate::data_sources::redis;
 
 #[ComplexObject]
 impl TimeSlot {

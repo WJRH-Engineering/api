@@ -11,6 +11,8 @@ use chrono::Weekday;
 use std::fmt::Display;
 use std::fmt;
 
+use async_graphql::*;
+
 
 #[derive(Debug)]
 pub struct TimeOfWeek {
@@ -18,6 +20,15 @@ pub struct TimeOfWeek {
     hour: u32,
     minute: u32,
     second: u32,
+}
+
+#[Object]
+impl TimeOfWeek {
+    pub async fn value(&self) -> String { self.to_string() }
+    pub async fn day(&self) -> u32 { self.day.number_from_monday() }
+    pub async fn hour(&self) -> u32 { self.hour }
+    pub async fn minute(&self) -> u32 { self.minute }
+    pub async fn second(&self) -> u32 { self.second }
 }
 
 impl TimeOfWeek {
