@@ -1,6 +1,5 @@
 /// The HTTP server used to serve the API
 
-use async_graphql::*;
 use serde_json::from_str;
 use std::fs::File;
 use tide::Request;
@@ -17,8 +16,8 @@ pub struct State {
 
 #[derive(Deserialize)]
 struct RequestBody {
-	operation_name: Option<String>,
-	variables: Option<std::collections::HashMap<String, String>>,
+	_operation_name: Option<String>,
+	_variables: Option<std::collections::HashMap<String, String>>,
 	query: String,
 }
 

@@ -7,13 +7,13 @@ use chrono::DateTime;
 use chrono::offset::Utc;
 use sqlx::postgres::*;
 use std::env;
+use dotenv::dotenv;
 
 // NOTE: currently, this url is not set correctly in order to protect the
 // databas password. Please set it manually with the DATABASE_URL environment
 // variable.
 const DEFAULT_URL: &'static str = "postgres://wjrh:password@api.wjrh.org/testdb";
 
-use dotenv::dotenv;
 
 /// Create a connection to the Postgres Database and return it
 async fn get_connection() -> PgPool {

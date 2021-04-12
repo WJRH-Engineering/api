@@ -1,8 +1,21 @@
 use redis;
 use redis::Connection;
 use std::collections::HashMap;
+use std::env;
+use dotenv::dotenv;
+
+/// Opens a connection to the redis database and returns its.
+/// It will attempt to read the `REDIS_URL` environment variable, either from
+/// the environment or from a `.env` file. If it cannot find one, it defaults
+/// to connecting to localhost `redis://127.0.0.1`
 pub fn get_connection() -> redis::RedisResult<Connection> {
-	let client = redis::Client::open("redis://127.0.0.1/")?;
+    dotenv().ok();
+    let url = match env::var("REDIS_URL") {
+        Ok(url) => url,
+        Err(_error) => "redis://127.0.0.1".to_string(),
+    };
+
+	let client = redis::Client::open(url)?;
 	let connection = client.get_connection()?;
 	Ok(connection)
 }
