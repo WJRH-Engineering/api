@@ -1,59 +1,79 @@
- use juniper::{
-	graphql_object, EmptyMutation, EmptySubscription, FieldResult, 
-	GraphQLEnum, Variables, GraphQLObject,
- };
-
-use actix_web::{web, App, HttpResponse, get, post, HttpRequest, HttpServer, Responder};
-
-use juniper_actix::graphql_handler;
-use juniper_actix::playground_handler;
-
-pub struct Query;
-
+mod data_sources;
+mod graphql_types;
 mod schema;
-mod teal;
-mod lastfm;
-mod schedule;
+mod server;
 
-type Schema = juniper::RootNode<'static, Query, EmptyMutation<()>, EmptySubscription<()>>;
+use dotenv::dotenv;
+use std::env;
 
-fn schema() -> Schema {
-	Schema::new(
-		Query,
-		EmptyMutation::new(),
-		EmptySubscription::new(),
-	)
+use async_graphql::{EmptyMutation, EmptySubscription};
+use async_std;
+use serde_json::from_str;
+
+use schema::Query;
+type Schema = async_graphql::Schema<Query, EmptyMutation, EmptySubscription>;
+
+macro_rules! get_schema {
+    ($query:ident) => {
+        Schema::new(
+           $query::default(),
+           EmptyMutation,
+           EmptySubscription,
+        );
+   }
 }
 
-#[get("/")]
-async fn playground() -> impl Responder {
-	playground_handler("/", None).await
+#[async_std::main]
+async fn main() {
+
+    // load extra settings from the .env file
+	println!("Loading environment variables");
+	dotenv().ok();
+
+    // build the schema
+	let schema = Schema::new(
+		Query::default(),
+		EmptyMutation,
+		EmptySubscription
+	);
+
+    // start the server
+    println!("Listening on port 2000");
+	let app = server::init(schema);
+	app.listen("0.0.0.0:2000").await;
 }
 
-#[post("/")]
-async fn graphql(
-	request: HttpRequest,
-	payload: actix_web::web::Payload,
-	schema: web::Data<Schema>,
-) -> impl Responder {
-	graphql_handler(&schema, &(), request, payload).await
-}
 
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()>{
-
-	// just for testing
-	// schedule::test_redis().await;
-
-	// Ok(())
-	
-
-	 // start the actix web server
-	 HttpServer::new(|| {
-		App::new()
-			.data(schema())
-			.service(playground)
-			.service(graphql)
-	 }).bind("0.0.0.0:8000")?.run().await
+    #[async_std::test]
+    async fn lookup_song(){
+        let schema = get_schema!(Query);
+        let res = schema.execute("{
+            lookupSong(artist: \"hilltop hoods\", title: \"leave me lonely\") {
+                wiki
+            }
+        }").await;
+        let json = serde_json::to_string_pretty(&res).unwrap();
+        println!("{}", json);
+        // panic!();
+   } 
+    
+    #[async_std::test]
+    async fn query(){
+        let schema = get_schema!(Query);
+        let res = schema.execute("{
+            programs(limit: 5) {
+                name
+                episodes {
+                    name
+                }
+            }
+        }").await;
+        let json = serde_json::to_string_pretty(&res).unwrap();
+        println!("{}", json);
+        // panic!();
+   } 
 }
