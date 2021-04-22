@@ -62,7 +62,14 @@ mod routes {
 		let res = schema.execute(&query).await;
 		let json = serde_json::to_string(&res).unwrap();
 
-		Ok(Response::builder(200).body(json).header("content-type", "text/json").build())
+        let response = Response::builder(200)
+           .header("content-type", "text/json")
+           .header("Access-Control-Allow-Origin", "*")
+           .body(json)
+           .build();
+
+        Ok(response)
+
 	}
 }
 
